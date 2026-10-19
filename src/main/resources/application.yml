@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: parity-rs
+  datasource:
+    url: jdbc:postgresql://localhost:5432/parity_rs
+    username: parity_rs
+    password: parity_rs
+  jpa:
+    hibernate:
+      # Flyway owns the schema (db/migration); Hibernate only checks it.
+      ddl-auto: validate
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: parity-rs
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    producer:
+      acks: all
+    listener:
+      # Workers acknowledge their requests; an offset is committed once every earlier
+      # request of its partition is done.
+      ack-mode: manual
+      async-acks: true
+
+parity-rs:
+  topics:
+    requests: tenant.routing.requests
+    responses: tenant.routing.responses
+    events: tenant.routing.events
+    # Lifecycle events of the instances, for one-at-a-time graceful shutdown. One partition.
+    instances: tenant.routing.instances
+  workers:
+    count: 4
+    retry-delay: 1s
+  lifecycle:
+    # Empty: host name and process id.
+    instance-id:
+    healthy-file: /tmp/${spring.application.name}.healthy
+    drained-file: /tmp/${spring.application.name}.drained
+    drain-timeout: 30s
+
+logging:
+  level:
+    org.apache.kafka: warn
